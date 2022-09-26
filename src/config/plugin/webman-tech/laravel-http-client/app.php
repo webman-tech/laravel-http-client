@@ -22,6 +22,7 @@ return [
         'level' => 'info',
         /**
          * 日志格式
+         * @link \GuzzleHttp\MessageFormatter::format()
          */
         'format' => \GuzzleHttp\MessageFormatter::CLF,
     ],
