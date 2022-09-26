@@ -2,8 +2,13 @@
 
 namespace WebmanTech\LaravelHttpClient\Facades;
 
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\MessageFormatter;
+use GuzzleHttp\Middleware;
 use Illuminate\Http\Client\Factory;
+use Illuminate\Http\Client\PendingRequest;
 use support\Container;
+use support\Log;
 
 /**
  * @method static \GuzzleHttp\Promise\PromiseInterface response($body = null, $status = 200, $headers = [])
@@ -57,13 +62,92 @@ use support\Container;
  */
 class Http
 {
+    protected static $config = null;
+
+    /**
+     * @return Factory
+     */
     public static function instance(): Factory
     {
-        return Container::get(Factory::class);
+        if (static::$config === null) {
+            static::$config = config('plugin.webman-tech.laravel-http-client.app', []);
+        }
+
+        $factory = Container::get(Factory::class);
+
+        static::bootMacros($factory);
+
+        return $factory;
     }
 
     public static function __callStatic($name, $arguments)
     {
-        return static::instance()->{$name}(...$arguments);
+        $factory = static::instance();
+        if (in_array($name, [
+            'delete', 'get', 'head', 'patch', 'post', 'put', 'send',
+            'withOptions',
+        ])) {
+            // 添加默认的 guzzle options
+            return $factory->withOptions(static::buildDefaultOptions())
+                ->{$name}(...$arguments);
+        }
+        // PendingRequest 的
+        $result = $factory->{$name}(...$arguments);
+        if ($result instanceof PendingRequest) {
+            return $result->withOptions(static::buildDefaultOptions());
+        }
+        // result
+        return $result;
+    }
+
+    protected static $_macrosLoaded = [];
+
+    /**
+     * @param Factory $factory
+     * @return void
+     */
+    protected static function bootMacros(Factory $factory): void
+    {
+        if (isset(static::$_macrosLoaded['macros'])) {
+            return;
+        }
+        static::$_macrosLoaded['macros'] = true;
+
+        $macros = static::$config['macros'] ?? [];
+        if (!$macros) {
+            return;
+        }
+        /** @var Factory $class */
+        $class = get_class($factory);
+        foreach ($macros as $name => $macro) {
+            $class::macro($name, $macro);
+        }
+    }
+
+    protected static function buildDefaultOptions(): array
+    {
+        if ($options = static::$config['log'] ?? []) {
+            $options = static::buildGuzzleLog($options);
+        }
+        return array_merge($config['guzzle'] ?? [], $options);
+    }
+
+    protected static function buildGuzzleLog(array $config): array
+    {
+        if (!isset($log['enable']) || !$log['enable']) {
+            return [];
+        }
+        $config = array_merge([
+            'channel' => 'httpClient',
+            'level' => 'info',
+            'formatter' => MessageFormatter::CLF,
+        ], $config);
+
+        $handler = HandlerStack::create();
+        $handler->push(Middleware::log(Log::channel($config['channel']), new MessageFormatter($config['formatter']), $config['level']));
+
+        return [
+            'handler' => $handler,
+        ];
     }
 }
