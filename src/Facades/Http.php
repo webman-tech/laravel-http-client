@@ -129,12 +129,12 @@ class Http
         if ($options = static::$config['log'] ?? []) {
             $options = static::buildGuzzleLog($options);
         }
-        return array_merge($config['guzzle'] ?? [], $options);
+        return array_merge(static::$config['guzzle'] ?? [], $options);
     }
 
     protected static function buildGuzzleLog(array $config): array
     {
-        if (!isset($log['enable']) || !$log['enable']) {
+        if (!isset($config['enable']) || !$config['enable']) {
             return [];
         }
         $config = array_merge([
