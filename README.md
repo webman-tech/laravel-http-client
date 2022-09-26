@@ -22,7 +22,7 @@ composer require webman-tech/laravel-http-client
 
 配置文件 `config/plugin/webman-tech/laravel-http-client/app.php` 中的 `log` 栏目可以配置日志相关
 
-默认为开启日志记录
+默认未启用
 
 ### 默认的 guzzle options 配置
 

@@ -140,11 +140,11 @@ class Http
         $config = array_merge([
             'channel' => 'httpClient',
             'level' => 'info',
-            'formatter' => MessageFormatter::CLF,
+            'format' => MessageFormatter::CLF,
         ], $config);
 
         $handler = HandlerStack::create();
-        $handler->push(Middleware::log(Log::channel($config['channel']), new MessageFormatter($config['formatter']), $config['level']));
+        $handler->push(Middleware::log(Log::channel($config['channel']), new MessageFormatter($config['format']), $config['level']));
 
         return [
             'handler' => $handler,
