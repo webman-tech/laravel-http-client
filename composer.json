@@ -1,0 +1,13 @@
+{
+  "name": "webman-tech/laravel-http-client",
+  "type": "library",
+  "license": "MIT",
+  "description": "Webman plugin webman-tech/laravel-http-client",
+  "require": {
+  },
+  "autoload": {
+    "psr-4": {
+      "WebmanTech\\LaravelHttpClient\\": "src"
+    }
+  }
+}
