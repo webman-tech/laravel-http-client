@@ -4,10 +4,19 @@
   "license": "MIT",
   "description": "Webman plugin webman-tech/laravel-http-client",
   "require": {
+    "php": ">=7.2",
+    "illuminate/http": ">=8.0",
+    "guzzlehttp/guzzle": ">=6.5"
+  },
+  "require-dev": {
+    "workerman/webman-framework": "^1.4.7"
   },
   "autoload": {
     "psr-4": {
       "WebmanTech\\LaravelHttpClient\\": "src"
     }
+  },
+  "config": {
+    "sort-packages": true
   }
 }
