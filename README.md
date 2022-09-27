@@ -18,6 +18,10 @@ composer require webman-tech/laravel-http-client
 
 所有 API 同 laravel，以下仅对有些特殊的操作做说明
 
+### Facade 入口
+
+使用 `WebmanTech\LaravelHttpClient\Facades\Http` 代替 `Illuminate\Support\Facades\Http`
+
 ### 请求日志
 
 配置文件 `config/plugin/webman-tech/laravel-http-client/app.php` 中的 `log` 栏目可以配置日志相关
