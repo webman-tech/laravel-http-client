@@ -21,11 +21,13 @@ class CustomLog implements CustomLogInterface
         'log_channel_3xx' => null,
         'log_channel_4xx' => null,
         'log_channel_5xx' => null,
+        'log_channel_slow' => null,
         'log_level_all' => null,
         'log_level_2xx' => 'debug',
         'log_level_3xx' => 'info',
         'log_level_4xx' => 'warning',
         'log_level_5xx' => 'error',
+        'log_level_slow' => 'warning',
         'log_replacer' => [],
     ];
 
@@ -43,12 +45,12 @@ class CustomLog implements CustomLogInterface
             return true;
         }
 
-        $codeType = substr($response->getStatusCode(), 0, 1);
-        if ($this->config["filter_{$codeType}xx"]) {
+        $codeType = $this->getStatusCodeType($response->getStatusCode());
+        if ($this->config["filter_{$codeType}xx"] ?? null) {
             return true;
         }
 
-        if ($this->config['filter_slow'] < $sec) {
+        if ($this->isRequestSlow($sec)) {
             return true;
         }
 
@@ -61,17 +63,29 @@ class CustomLog implements CustomLogInterface
     public function log(RequestInterface $request, ResponseInterface $response, float $sec): void
     {
         $level = $this->config['log_level_all'];
-        if (!$level) {
-            $codeType = substr($response->getStatusCode(), 0, 1);
-            $level = $this->config["log_level_{$codeType}xx"] ?? 'info';
-        }
         $channel = $this->config['log_channel'];
-        if (!$channel) {
-            $codeType = substr($response->getStatusCode(), 0, 1);
-            $channel = $this->config["log_channel_{$codeType}xx"] ?? 'default';
+        if (!$level || !$channel) {
+            $codeType = $this->getStatusCodeType($response->getStatusCode());
+            $isRequestSlow = $this->isRequestSlow($sec);
+            if (!$level) {
+                $level = $isRequestSlow ? $this->config['log_level_slow'] : ($this->config["log_level_{$codeType}xx"] ?? 'info');
+            }
+            if (!$channel) {
+                $channel = $isRequestSlow ? $this->config['log_channel_slow'] : ($this->config["log_channel_{$codeType}xx"] ?? 'default');
+            }
         }
         $message = $this->getMessage($request, $response, $sec);
         Log::channel($channel)->log($level, $message);
+    }
+
+    protected function getStatusCodeType(int $statusCode): int
+    {
+        return substr($statusCode, 0, 1);
+    }
+
+    protected function isRequestSlow(float $sec): bool
+    {
+        return $this->config['filter_slow'] < $sec;
     }
 
     /**
