@@ -4,7 +4,7 @@ Laravel [illuminate/http](https://packagist.org/packages/illuminate/http) 中的
 
 ## 介绍
 
-站在巨人（laravel）的肩膀上使文件存储使用更加*可靠*和*便捷*
+站在巨人（laravel）的肩膀上使 http 请求使用更加*可靠*和*便捷*
 
 所有方法和配置与 laravel 几乎一模一样，因此使用方式完全参考 [Laravel文档](https://laravel.com/docs/8.x/http-client) 即可
 
