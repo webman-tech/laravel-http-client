@@ -17,6 +17,10 @@ class CustomLog implements CustomLogInterface
         'filter_5xx' => true,
         'filter_slow' => 1.5,
         'log_channel' => 'default',
+        'log_channel_2xx' => null,
+        'log_channel_3xx' => null,
+        'log_channel_4xx' => null,
+        'log_channel_5xx' => null,
         'log_level_all' => null,
         'log_level_2xx' => 'debug',
         'log_level_3xx' => 'info',
@@ -61,8 +65,13 @@ class CustomLog implements CustomLogInterface
             $codeType = substr($response->getStatusCode(), 0, 1);
             $level = $this->config["log_level_{$codeType}xx"] ?? 'info';
         }
+        $channel = $this->config['log_channel'];
+        if (!$channel) {
+            $codeType = substr($response->getStatusCode(), 0, 1);
+            $channel = $this->config["log_channel_{$codeType}xx"] ?? 'default';
+        }
         $message = $this->getMessage($request, $response, $sec);
-        Log::channel($this->config['log_channel'])->log($level, $message);
+        Log::channel($channel)->log($level, $message);
     }
 
     /**

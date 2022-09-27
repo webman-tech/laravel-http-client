@@ -34,21 +34,13 @@ return [
          * 建议使用 CustomLogInterface 形式，支持慢请求、请求时长、更多配置
          */
         'custom' => function (array $config) {
-            return new \WebmanTech\LaravelHttpClient\Guzzle\Log\CustomLog([
-                //'filter_all' => false,
-                //'filter_2xx' => true,
-                //'filter_3xx' => true,
-                //'filter_4xx' => true,
-                //'filter_5xx' => true,
-                //'filter_slow' => 1.5,
+            /**
+             * @see \WebmanTech\LaravelHttpClient\Guzzle\Log\CustomLog::$config
+             */
+            $config = [
                 'log_channel' => $config['channel'],
-                //'log_level_all' => null,
-                //'log_level_2xx' => 'debug',
-                //'log_level_3xx' => 'info',
-                //'log_level_4xx' => 'warning',
-                //'log_level_5xx' => 'error',
-                //'log_replacer' => [], // 替换消息中的部分信息
-            ]);
+            ];
+            return new \WebmanTech\LaravelHttpClient\Guzzle\Log\CustomLog($config);
         }
     ],
     /**

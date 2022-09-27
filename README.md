@@ -28,15 +28,23 @@ composer require webman-tech/laravel-http-client
 
 默认未启用
 
+支持配置各种情况日志：
+
+- 仅记录响应状态码为 2xx/3xx/4xx/5xx 类型的日志
+- 仅记录慢请求
+- 不同响应码记录不同 log level
+- 不同响应码记录不同 log channel
+- 替换请求日志中的敏感信息
+
 ### 默认的 guzzle options 配置
 
 配置文件 `config/plugin/webman-tech/laravel-http-client/app.php` 中的 `guzzle` 栏目可以配置 guzzle 的默认配置
 
-会在每次发送请求是使用该默认值
+会在每次发送请求时使用该默认值
 
 ### 快速定义与简化 api 调用
 
-如果接口请求比较多，建议通过 `macros` 来预定义一些接口的请求信息（比如 baseUrl、Headers 等）
+如果对同一个站点的接口请求比较多，建议通过 `macros` 来预定义一些接口的请求信息（比如 baseUrl、Headers 等）
 
 配置文件 `config/plugin/webman-tech/laravel-http-client/app.php` 中的 `macros` 栏目中
 
