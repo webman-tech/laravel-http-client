@@ -8,6 +8,8 @@ use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Client\PendingRequest;
 use support\Container;
 use support\Log;
+use WebmanTech\LaravelHttpClient\Guzzle\Log\CustomLogInterface;
+use WebmanTech\LaravelHttpClient\Guzzle\Log\Middleware as LogMiddleware;
 
 /**
  * @method static \GuzzleHttp\Promise\PromiseInterface response($body = null, $status = 200, $headers = [])
@@ -158,10 +160,21 @@ class Http
             return [];
         }
         $config = array_merge([
-            'channel' => 'httpClient',
+            'channel' => 'default',
             'level' => 'info',
             'format' => MessageFormatter::CLF,
+            'custom' => null,
         ], $config);
+
+        if ($config['custom']) {
+            $customLog = call_user_func($config['custom'], $config);
+            if ($customLog instanceof CustomLogInterface) {
+                return (new LogMiddleware($customLog))->__invoke();
+            }
+            if ($customLog instanceof \Closure) {
+                return $customLog;
+            }
+        }
 
         return Middleware::log(Log::channel($config['channel']), new MessageFormatter($config['format']), $config['level']);
     }
