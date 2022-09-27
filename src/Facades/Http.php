@@ -2,7 +2,6 @@
 
 namespace WebmanTech\LaravelHttpClient\Facades;
 
-use GuzzleHttp\HandlerStack;
 use GuzzleHttp\MessageFormatter;
 use GuzzleHttp\Middleware;
 use Illuminate\Http\Client\Factory;
@@ -87,14 +86,14 @@ class Http
             'delete', 'get', 'head', 'patch', 'post', 'put', 'send',
             'withOptions',
         ])) {
-            // 添加默认的 guzzle options
-            return $factory->withOptions(static::buildDefaultOptions())
+            // 先添加 extension 再执行对应方法
+            return static::attachExtension($factory)
                 ->{$name}(...$arguments);
         }
-        // PendingRequest 的
+        // 先执行，再添加 extension
         $result = $factory->{$name}(...$arguments);
         if ($result instanceof PendingRequest) {
-            return $result->withOptions(static::buildDefaultOptions());
+            return static::attachExtension($result);
         }
         // result
         return $result;
@@ -124,16 +123,37 @@ class Http
         }
     }
 
-    protected static function buildDefaultOptions(): array
+    /**
+     * @param Factory|PendingRequest $http
+     * @return Factory|PendingRequest
+     */
+    protected static function attachExtension($http)
     {
-        if ($options = static::$config['log'] ?? []) {
-            $options = static::buildGuzzleLog($options);
+        if ($http instanceof PendingRequest) {
+            // PendingRequest 不能多次附加 extension
+            $options = $http->getOptions();
+            if (array_key_exists('__attached_extension', $options)) {
+                return $http;
+            }
         }
-        return array_merge(static::$config['guzzle'] ?? [], $options);
+
+        if ($logMiddleware = static::getLogMiddleware()) {
+            $http->withMiddleware($logMiddleware);
+        }
+        $options = array_merge(static::getDefaultOptions(), [
+            '__attached_extension' => 1,
+        ]);
+        $http->withOptions($options);
+
+        return $http;
     }
 
-    protected static function buildGuzzleLog(array $config): array
+    /**
+     * @return callable|null
+     */
+    protected static function getLogMiddleware(): ?callable
     {
+        $config = static::$config['log'] ?? [];
         if (!isset($config['enable']) || !$config['enable']) {
             return [];
         }
@@ -143,11 +163,14 @@ class Http
             'format' => MessageFormatter::CLF,
         ], $config);
 
-        $handler = HandlerStack::create();
-        $handler->push(Middleware::log(Log::channel($config['channel']), new MessageFormatter($config['format']), $config['level']));
+        return Middleware::log(Log::channel($config['channel']), new MessageFormatter($config['format']), $config['level']);
+    }
 
-        return [
-            'handler' => $handler,
-        ];
+    /**
+     * @return array
+     */
+    protected static function getDefaultOptions(): array
+    {
+        return static::$config['guzzle'] ?? [];
     }
 }
