@@ -157,7 +157,7 @@ class Http
     {
         $config = static::$config['log'] ?? [];
         if (!isset($config['enable']) || !$config['enable']) {
-            return [];
+            return null;
         }
         $config = array_merge([
             'channel' => 'default',
