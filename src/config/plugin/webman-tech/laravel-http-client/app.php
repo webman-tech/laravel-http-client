@@ -20,14 +20,18 @@ return [
         'level' => 'info',
         /**
          * 日志格式
+         * 启用 custom 时无实际作用
          * @link \GuzzleHttp\MessageFormatter::format()
          */
         'format' => \GuzzleHttp\MessageFormatter::CLF,
         /**
          * 自定义日志
-         * 返回 null 时使用 guzzle 的 @see GuzzleHttp\Middleware::log()
+         *
          * 返回 WebmanTech\LaravelHttpClient\Guzzle\Log\CustomLogInterface 时使用 @see WebmanTech\LaravelHttpClient\Guzzle\Log\Middleware::__invoke()
+         * 返回 null 时使用 guzzle 的 @see GuzzleHttp\Middleware::log()
          * 返回 callable 时使用自定义 middleware @link https://docs.guzzlephp.org/en/stable/handlers-and-middleware.html#middleware
+         *
+         * 建议使用 CustomLogInterface 形式，支持慢请求、请求时长、更多配置
          */
         'custom' => function (array $config) {
             return new \WebmanTech\LaravelHttpClient\Guzzle\Log\CustomLog([
