@@ -5,11 +5,12 @@
   "description": "Webman plugin webman-tech/laravel-http-client",
   "require": {
     "php": ">=7.3",
-    "illuminate/http": "^8.0|^9.0",
+    "illuminate/http": ">=8.0",
     "guzzlehttp/guzzle": ">=6.5"
   },
   "require-dev": {
     "monolog/monolog": "^2.8",
+    "phpunit/phpunit": "^9",
     "workerman/webman-framework": "^1.4.7"
   },
   "autoload": {
@@ -17,7 +18,15 @@
       "WebmanTech\\LaravelHttpClient\\": "src"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "WebmanTech\\LaravelHttpClient\\Tests\\": "tests"
+    }
+  },
   "config": {
     "sort-packages": true
+  },
+  "scripts": {
+    "test": "phpunit --testdox --no-interaction"
   }
 }
