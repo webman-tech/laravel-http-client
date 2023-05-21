@@ -11,7 +11,7 @@ return [
         /**
          * 日志是否启用，建议启用
          */
-        'enable' => false,
+        'enable' => true,
         /**
          * 日志的 channel
          */

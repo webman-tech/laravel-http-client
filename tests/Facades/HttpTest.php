@@ -158,4 +158,12 @@ class HttpTest extends TestCase
         // macro 已经通过 config 配置
         $this->assertTrue(Http::httpbin()->get('anything')->ok());
     }
+
+    public function testLog()
+    {
+        // 已经通过 config 配置
+        Http::get('https://httpbin.org/anything');
+        $date = date('Y-m-d');
+        $this->assertTrue(file_exists(runtime_path() . "/logs/webman-{$date}.log"));
+    }
 }
