@@ -176,14 +176,13 @@ class HttpTest extends TestCase
     {
         $date = date('Y-m-d');
         $logFile = runtime_path() . "/logs/webman-{$date}.log";
-
-        // 前面的测试可能已经产生了 logFile，所以要删掉
-        if (file_exists($logFile)) {
-            unlink($logFile);
-        }
+        $logSize = strlen(file_get_contents($logFile));
 
         // 已经通过 config 配置
         Http::get("{$this->httpBinHost}/anything");
-        $this->assertTrue(file_exists($logFile));
+
+        // 通过比较日志大小来判断是否记了日志
+        $newLogSize = strlen(file_get_contents($logFile));
+        $this->assertTrue(($newLogSize - $logSize) > 10);
     }
 }
