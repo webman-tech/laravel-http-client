@@ -60,7 +60,7 @@ return [
     'macros' => [
         // 测试用
         'httpbin' => function() {
-            return Http::baseUrl('https://httpbin.org')
+            return Http::baseUrl(\WebmanTech\LaravelHttpClient\Tests\Facades\HttpTest::HTTP_BIN_HOST)
                 ->asJson();
         }
     ],
