@@ -161,9 +161,16 @@ class HttpTest extends TestCase
 
     public function testLog()
     {
+        $date = date('Y-m-d');
+        $logFile = runtime_path() . "/logs/webman-{$date}.log";
+
+        // 前面的测试可能已经产生了 logFile，所以要删掉
+        if (file_exists($logFile)) {
+            unlink($logFile);
+        }
+
         // 已经通过 config 配置
         Http::get('https://httpbin.org/anything');
-        $date = date('Y-m-d');
-        $this->assertTrue(file_exists(runtime_path() . "/logs/webman-{$date}.log"));
+        $this->assertTrue(file_exists($logFile));
     }
 }

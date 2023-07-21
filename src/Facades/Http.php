@@ -6,6 +6,7 @@ use GuzzleHttp\MessageFormatter;
 use GuzzleHttp\Middleware;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Client\PendingRequest;
+use InvalidArgumentException;
 use support\Container;
 use support\Log;
 use WebmanTech\LaravelHttpClient\Guzzle\Log\CustomLogInterface;
@@ -126,28 +127,45 @@ class Http
     }
 
     /**
-     * @param Factory|PendingRequest $http
-     * @return Factory|PendingRequest
+     * @param PendingRequest|Factory $http
+     * @return PendingRequest
      */
     protected static function attachExtension($http)
     {
-        if ($http instanceof PendingRequest) {
+        if ($http instanceof Factory) {
+            $http = static::newPendingRequest($http);
+        }
+        if (!$http instanceof PendingRequest) {
+            throw new InvalidArgumentException('http must be instance of PendingRequest');
+        }
+
+        $attachedExtensionOptionKey = '__attached_extension';
+
+        $options = $http->getOptions();
+        if (array_key_exists($attachedExtensionOptionKey, $options)) {
             // PendingRequest 不能多次附加 extension
-            $options = $http->getOptions();
-            if (array_key_exists('__attached_extension', $options)) {
-                return $http;
-            }
+            return $http;
         }
 
         if ($logMiddleware = static::getLogMiddleware()) {
             $http->withMiddleware($logMiddleware);
         }
         $options = array_merge(static::getDefaultOptions(), [
-            '__attached_extension' => 1,
+            $attachedExtensionOptionKey => 1,
         ]);
         $http->withOptions($options);
 
         return $http;
+    }
+
+    /**
+     * @see Factory::newPendingRequest()
+     * @param Factory $factory
+     * @return PendingRequest
+     */
+    protected static function newPendingRequest(Factory $factory): PendingRequest
+    {
+        return new PendingRequest($factory);
     }
 
     /**
