@@ -2,6 +2,7 @@
 
 namespace WebmanTech\LaravelHttpClient\Facades;
 
+use Closure;
 use GuzzleHttp\MessageFormatter;
 use GuzzleHttp\Middleware;
 use Illuminate\Http\Client\Factory;
@@ -84,20 +85,29 @@ class Http
     public static function __callStatic($name, $arguments)
     {
         $factory = static::instance();
+
+        // 直接调用这些方法会直接调用 PendingRequest 中的方法返回 Response，因此需要手动 attach
         if (in_array($name, [
             'delete', 'get', 'head', 'patch', 'post', 'put', 'send',
-            'withOptions',
         ])) {
-            // 先添加 extension 再执行对应方法
-            return static::attachExtension($factory)
-                ->{$name}(...$arguments);
+            $http = static::newPendingRequest($factory);
+            static::attachExtension($http);
+            return $http->{$name}(...$arguments);
         }
-        // 先执行，再添加 extension
+
+        // pool 方法的 callable 中会直接调用 PendingRequest 的方法返回 Response，所以需要手动 attach
+        if ($name === 'pool') {
+            // TODO 目前暂未想好如何自动 attach
+        }
+
+        // 其他返回 PendingRequest 的情况
         $result = $factory->{$name}(...$arguments);
         if ($result instanceof PendingRequest) {
-            return static::attachExtension($result);
+            static::attachExtension($result);
+            return $result;
         }
-        // result
+
+        // 返回非 PendingRequest 的情况
         return $result;
     }
 
@@ -126,28 +136,35 @@ class Http
     }
 
     /**
-     * @param Factory|PendingRequest $http
-     * @return Factory|PendingRequest
+     * @param PendingRequest $http
      */
-    protected static function attachExtension($http)
+    private static function attachExtension($http)
     {
-        if ($http instanceof PendingRequest) {
+        $attachedExtensionOptionKey = '__attached_extension';
+
+        $options = $http->getOptions();
+        if (array_key_exists($attachedExtensionOptionKey, $options)) {
             // PendingRequest 不能多次附加 extension
-            $options = $http->getOptions();
-            if (array_key_exists('__attached_extension', $options)) {
-                return $http;
-            }
+            return;
         }
 
         if ($logMiddleware = static::getLogMiddleware()) {
             $http->withMiddleware($logMiddleware);
         }
         $options = array_merge(static::getDefaultOptions(), [
-            '__attached_extension' => 1,
+            $attachedExtensionOptionKey => 1,
         ]);
         $http->withOptions($options);
+    }
 
-        return $http;
+    /**
+     * @see Factory::newPendingRequest()
+     * @param Factory $factory
+     * @return PendingRequest
+     */
+    private static function newPendingRequest(Factory $factory): PendingRequest
+    {
+        return new PendingRequest($factory);
     }
 
     /**
@@ -171,7 +188,7 @@ class Http
             if ($customLog instanceof CustomLogInterface) {
                 return (new LogMiddleware($customLog))->__invoke();
             }
-            if ($customLog instanceof \Closure) {
+            if ($customLog instanceof Closure) {
                 return $customLog;
             }
         }
