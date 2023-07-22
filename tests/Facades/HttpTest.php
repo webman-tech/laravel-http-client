@@ -176,13 +176,31 @@ class HttpTest extends TestCase
     {
         $date = date('Y-m-d');
         $logFile = runtime_path() . "/logs/webman-{$date}.log";
+        if (!file_exists($logFile)) {
+            mkdir(dirname($logFile), 0777, true);
+            file_put_contents($logFile, '');
+        }
         $logSize = strlen(file_get_contents($logFile));
 
-        // 已经通过 config 配置
-        Http::get("{$this->httpBinHost}/anything");
+        $assetLogged = function (bool $is) use ($logFile, &$logSize) {
+            $newLogSize = strlen(file_get_contents($logFile));
+            // 通过比较日志大小来判断是否记了日志
+            $this->assertIsBool($is, ($newLogSize - $logSize) > 10);
+            $logSize = $newLogSize;
+        };
 
-        // 通过比较日志大小来判断是否记了日志
-        $newLogSize = strlen(file_get_contents($logFile));
-        $this->assertTrue(($newLogSize - $logSize) > 10);
+        // 直接发请求的记录日志
+        Http::get("{$this->httpBinHost}/anything");
+        $assetLogged(true);
+
+        // macro 形式的记录日志
+        Http::httpbin()->get('anything');
+        $assetLogged(true);
+
+        // pool 目前不会记录日志
+        Http::pool(function (Pool $pool) {
+            $pool->get("{$this->httpBinHost}/anything");
+        });
+        $assetLogged(false);
     }
 }
