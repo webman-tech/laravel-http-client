@@ -16,6 +16,7 @@ class PsrMessageFormatter implements MessageFormatterInterface
         'response_body_limit_size' => 300, // response body 记录最大长度
         'request_body_skip_file' => true, // 提交文件时，跳过 body 记录
         'response_body_skip_file' => true, // 提交文件时，跳过 body 记录
+        'replacer' => [], // 替换日志中的内容，使用 preg_replace 匹配
     ];
 
     public function __construct(array $config = [])
@@ -35,11 +36,13 @@ class PsrMessageFormatter implements MessageFormatterInterface
             $this->config['response_body_limit_size'] = 0;
         }
 
-        return "Time {$sec}sec\r\n"
+        $content = "Time {$sec}sec\r\n"
             . "Request\r\n"
             . $this->formatMessage($request, $this->config['request_body_limit_size']) . "\r\n"
             . "Response\r\n"
             . $this->formatMessage($response, $this->config['response_body_limit_size']);
+
+        return $this->replaceContent($content, $this->config['replacer']);
     }
 
     private function formatMessage(MessageInterface $message, int $limit): string

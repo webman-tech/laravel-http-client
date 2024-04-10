@@ -35,4 +35,13 @@ trait MessageFormatterTrait
 
         return false;
     }
+
+    private function replaceContent(string $content, array $replacer): string
+    {
+        if (!$replacer) {
+            return $content;
+        }
+
+        return preg_replace(array_keys($replacer), array_values($replacer), $content);
+    }
 }

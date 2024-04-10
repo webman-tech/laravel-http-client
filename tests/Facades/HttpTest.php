@@ -218,7 +218,7 @@ class HttpTest extends TestCase
 
     public function testDifferentFormatter()
     {
-        $this->ensureLogFile();
+        $logFile = $this->ensureLogFile();
 
         Http::post("{$this->httpBinHost}/anything", [
             'a' => 'b'
@@ -228,10 +228,13 @@ class HttpTest extends TestCase
 
         // 此处是在 config 中配置了 query 中有 use_json_formatter=1 的，使用 json 格式的日志
         Http::post("{$this->httpBinHost}/anything?use_json_formatter=1", [
-            'a' => 'b'
+            'password' => '123456'
         ]);
         // 人工检查日志格式是不是 json 的
         $this->assertTrue(true);
+        // 检查 password 是否被替换
+        $content = file_get_contents($logFile);
+        $this->assertStringContainsString('\"password\":\"***\"', $content);
 
         Http::attach(
             'file', file_get_contents(__DIR__ . '/../fixtures/test.txt')

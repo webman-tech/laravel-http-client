@@ -35,6 +35,8 @@ composer require webman-tech/laravel-http-client
 - 不同响应码记录不同 log level
 - 不同响应码记录不同 log channel
 - 替换请求日志中的敏感信息
+- 自动截取部分请求或响应的 body，防止日志过大
+- 自动忽略请求或相应是 file 的，防止日志过大
 
 ### 默认的 guzzle options 配置
 

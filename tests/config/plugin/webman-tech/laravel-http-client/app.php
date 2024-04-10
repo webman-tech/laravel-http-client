@@ -46,7 +46,11 @@ return [
                 'log_channel' => $config['channel'],
                 'log_formatter' => function (RequestInterface $request) {
                     if (strpos($request->getUri()->getQuery(), 'use_json_formatter=1') !== false) {
-                        return JsonMessageFormatter::class;
+                        return new JsonMessageFormatter([
+                            'replacer' => [
+                                '/(\\\\"password\\\\":\\\\")(.*?)(\\\\")/' => '${1}***${3}',
+                            ],
+                        ]);
                     }
                     return PsrMessageFormatter::class;
                 }
