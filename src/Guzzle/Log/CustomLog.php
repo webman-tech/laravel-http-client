@@ -2,33 +2,38 @@
 
 namespace WebmanTech\LaravelHttpClient\Guzzle\Log;
 
-use GuzzleHttp\Psr7\Message;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use support\Log;
+use WebmanTech\LaravelHttpClient\Guzzle\Log\Formatter\MessageFormatterInterface;
+use WebmanTech\LaravelHttpClient\Guzzle\Log\Formatter\PsrMessageFormatter;
 
 class CustomLog implements CustomLogInterface
 {
     protected $config = [
-        'filter_all' => false,
-        'filter_2xx' => true,
-        'filter_3xx' => true,
-        'filter_4xx' => true,
-        'filter_5xx' => true,
-        'filter_slow' => 1.5,
-        'log_channel' => 'default',
+        // 定义哪些被记录日志
+        'filter_all' => false, // 全部请求
+        'filter_2xx' => true, // 响应 code 为 2xx 的
+        'filter_3xx' => true, // 响应 code 为 3xx 的
+        'filter_4xx' => true, // 响应 code 为 4xx 的
+        'filter_5xx' => true, // 响应 code 为 5xx 的
+        'filter_slow' => 1.5, // 请求时长超过这个值的，单位秒
+        // 日志通道
+        'log_channel' => 'default', // 默认的
         'log_channel_2xx' => null,
         'log_channel_3xx' => null,
         'log_channel_4xx' => null,
         'log_channel_5xx' => null,
         'log_channel_slow' => null,
+        // 日志等级
         'log_level_all' => null,
         'log_level_2xx' => 'debug',
         'log_level_3xx' => 'info',
         'log_level_4xx' => 'warning',
         'log_level_5xx' => 'error',
         'log_level_slow' => 'warning',
-        'log_replacer' => [],
+        // 日志的格式
+        'log_formatter' => PsrMessageFormatter::class,
     ];
 
     public function __construct(array $config)
@@ -62,18 +67,27 @@ class CustomLog implements CustomLogInterface
      */
     public function log(RequestInterface $request, ResponseInterface $response, float $sec): void
     {
-        $level = $this->config['log_level_all'];
-        $channel = $this->config['log_channel'];
-        if (!$level || !$channel) {
-            $codeType = $this->getStatusCodeType($response->getStatusCode());
-            $isRequestSlow = $this->isRequestSlow($sec);
-            if (!$level) {
-                $level = $isRequestSlow ? $this->config['log_level_slow'] : ($this->config["log_level_{$codeType}xx"] ?? 'info');
-            }
-            if (!$channel) {
-                $channel = $isRequestSlow ? $this->config['log_channel_slow'] : ($this->config["log_channel_{$codeType}xx"] ?? 'default');
-            }
+        $codeType = $this->getStatusCodeType($response->getStatusCode());
+        $isRequestSlow = $this->isRequestSlow($sec);
+
+        $level = $channel = null;
+        if ($isRequestSlow) {
+            $level = $this->config['log_level_slow'];
+            $channel = $this->config['log_channel_slow'];
         }
+        if (!$level) {
+            $level = $this->config["log_level_{$codeType}xx"] ?? null;
+        }
+        if (!$channel) {
+            $channel = $this->config["log_channel_{$codeType}xx"] ?? null;
+        }
+        if (!$level) {
+            $level = $this->config['log_level_all'] ?? 'info';
+        }
+        if (!$channel) {
+            $channel = $this->config['log_channel'] ?? 'default';
+        }
+
         $message = $this->getMessage($request, $response, $sec);
         Log::channel($channel)->log($level, $message);
     }
@@ -96,10 +110,16 @@ class CustomLog implements CustomLogInterface
      */
     protected function getMessage(RequestInterface $request, ResponseInterface $response, float $sec): string
     {
-        return "Time {$sec}sec\r\n"
-            . "Request\r\n"
-            . strtr(Message::toString($request), $this->config['log_replacer']) . "\r\n"
-            . "Response\r\n"
-            . strtr(Message::toString($response), $this->config['log_replacer']);
+        $formatter = $this->config['log_formatter'];
+        if ($formatter instanceof \Closure) {
+            $formatter = call_user_func($formatter, $request, $response, $sec);
+        }
+        if (is_string($formatter)) {
+            $formatter = new $formatter();
+        }
+        if (!$formatter instanceof MessageFormatterInterface) {
+            throw new \InvalidArgumentException('log_formatter config error');
+        }
+        return $formatter->format($request, $response, $sec);
     }
 }

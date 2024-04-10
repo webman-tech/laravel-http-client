@@ -1,6 +1,9 @@
 <?php
 
+use Psr\Http\Message\RequestInterface;
 use WebmanTech\LaravelHttpClient\Facades\Http;
+use WebmanTech\LaravelHttpClient\Guzzle\Log\Formatter\JsonMessageFormatter;
+use WebmanTech\LaravelHttpClient\Guzzle\Log\Formatter\PsrMessageFormatter;
 
 return [
     'enable' => true,
@@ -41,6 +44,12 @@ return [
              */
             $config = [
                 'log_channel' => $config['channel'],
+                'log_formatter' => function (RequestInterface $request) {
+                    if (strpos($request->getUri()->getQuery(), 'use_json_formatter=1') !== false) {
+                        return JsonMessageFormatter::class;
+                    }
+                    return PsrMessageFormatter::class;
+                }
             ];
             return new \WebmanTech\LaravelHttpClient\Guzzle\Log\CustomLog($config);
         }

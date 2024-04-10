@@ -172,14 +172,26 @@ class HttpTest extends TestCase
         $this->assertTrue(Http::httpbin()->get('anything')->ok());
     }
 
-    public function testLog()
+    private function ensureLogFile(bool $reset = true)
     {
         $date = date('Y-m-d');
         $logFile = runtime_path() . "/logs/webman-{$date}.log";
         if (!file_exists($logFile)) {
-            mkdir(dirname($logFile), 0777, true);
+            $dirname = dirname($logFile);
+            if (!is_dir($dirname)) {
+                mkdir(dirname($logFile), 0777, true);
+            }
             file_put_contents($logFile, '');
         }
+        if ($reset) {
+            file_put_contents($logFile, '');
+        }
+        return $logFile;
+    }
+
+    public function testLog()
+    {
+        $logFile = $this->ensureLogFile();
         $logSize = strlen(file_get_contents($logFile));
 
         $assetLogged = function (bool $is) use ($logFile, &$logSize) {
@@ -202,5 +214,31 @@ class HttpTest extends TestCase
             $pool->get("{$this->httpBinHost}/anything");
         });
         $assetLogged(false);
+    }
+
+    public function testDifferentFormatter()
+    {
+        $this->ensureLogFile();
+
+        Http::post("{$this->httpBinHost}/anything", [
+            'a' => 'b'
+        ]);
+        // 人工检查日志格式是不是 psr 的
+        $this->assertTrue(true);
+
+        // 此处是在 config 中配置了 query 中有 use_json_formatter=1 的，使用 json 格式的日志
+        Http::post("{$this->httpBinHost}/anything?use_json_formatter=1", [
+            'a' => 'b'
+        ]);
+        // 人工检查日志格式是不是 json 的
+        $this->assertTrue(true);
+
+        Http::attach(
+            'file', file_get_contents(__DIR__ . '/../fixtures/test.txt')
+        )->post("{$this->httpBinHost}/anything", [
+            'a' => 'b'
+        ]);
+        // 人工检查日志是否将 form 的 body 屏蔽掉了
+        $this->assertTrue(true);
     }
 }
