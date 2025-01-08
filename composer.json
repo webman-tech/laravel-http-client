@@ -1,0 +1,19 @@
+{
+  "name": "webman-tech/laravel-http-client",
+  "type": "library",
+  "license": "MIT",
+  "description": "Webman plugin webman-tech/laravel-http-client",
+  "require": {
+    "php": "^8.2",
+    "illuminate/http": "^11.0",
+    "guzzlehttp/guzzle": "^7.8"
+  },
+  "autoload": {
+    "psr-4": {
+      "WebmanTech\\LaravelHttpClient\\": ""
+    }
+  },
+  "config": {
+    "sort-packages": true
+  }
+}
