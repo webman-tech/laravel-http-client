@@ -1,3 +1,8 @@
+# Deprecated 
+
+使用 [webman-tech/laravel-http](https://github.com/webman-tech/laravel-monorepo) 代替
+
+
 # webman-tech/laravel-http-client
 
 Laravel [illuminate/http](https://packagist.org/packages/illuminate/http) 中的 HttpClient for webman
